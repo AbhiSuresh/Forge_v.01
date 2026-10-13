@@ -1,0 +1,126 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#000000"><title>FORGE</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:#000;color:#f2f2f2;font:16px/1.45 system-ui,sans-serif;padding:0 0 90px}
+header{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;position:sticky;top:0;background:#000;z-index:5}
+header b{font-size:22px;letter-spacing:3px;color:#ff4d2e}
+#inst{background:none;border:1px solid #ff4d2e;color:#ff4d2e;border-radius:20px;padding:6px 14px}
+#app{padding:0 16px;max-width:640px;margin:auto}
+h2{margin:6px 0}h3{margin:22px 0 8px;color:#ff4d2e;font-size:15px;text-transform:uppercase;letter-spacing:1px}
+.mut,.sd{color:#8a8a8a;font-size:14px}.nm{font-weight:600}
+.chips{display:flex;gap:8px;overflow-x:auto;padding:4px 0 12px}
+.chip{flex:none;background:#111;border:1px solid #222;color:#ccc;border-radius:20px;padding:8px 16px}
+.chip.on{background:#ff4d2e;color:#000;border-color:#ff4d2e;font-weight:700}
+.row{display:flex;justify-content:space-between;align-items:center;gap:12px;background:#0d0d0d;border:1px solid #1c1c1c;border-radius:14px;padding:14px;margin:8px 0}
+.th{width:56px;height:56px;object-fit:cover;border-radius:8px;flex:none}
+.hero{width:100%;max-height:300px;object-fit:contain;background:#0d0d0d;border-radius:14px}
+.card{background:#0d0d0d;border:1px solid #1c1c1c;border-radius:14px;padding:14px;margin:10px 0}
+.big{font-size:44px;font-weight:800;color:#ff4d2e;line-height:1.1}
+.btn,.btn2{display:block;width:100%;text-align:center;border-radius:12px;padding:13px;margin:10px 0;font:inherit;font-weight:700;text-decoration:none;cursor:pointer}
+.btn{background:#ff4d2e;color:#000;border:0}.btn2{background:none;color:#ff4d2e;border:1px solid #ff4d2e}
+.f{display:flex;gap:8px}input[type=date],input[type=number]{flex:1;min-width:0;background:#111;border:1px solid #2a2a2a;color:#fff;border-radius:10px;padding:12px;font:inherit}
+.x{background:none;border:0;color:#ff6b6b}.bk{background:none;border:0;color:#ff4d2e;font:inherit;padding:8px 0}
+.sets{color:#ff4d2e;font-weight:600;margin-bottom:10px}ol{padding-left:22px}li{margin:8px 0}
+.fig{width:100%;max-width:340px;display:block;margin:auto}.fig text{fill:#777;font-size:9px;text-anchor:middle}
+.b{fill:#161616;stroke:#3a3a3a;stroke-width:.6}.m,.s,.p{stroke:#000;stroke-width:.4}.m{fill:#2c2c2c}.s{fill:#8a3a2b}.p{fill:#ff4d2e}
+.ch{width:100%;background:#0d0d0d;border-radius:14px}
+nav{position:fixed;bottom:0;left:0;right:0;display:flex;background:#0a0a0a;border-top:1px solid #1c1c1c;padding-bottom:env(safe-area-inset-bottom)}
+nav button{flex:1;background:none;border:0;color:#777;padding:16px;font:inherit;font-weight:600}nav button.on{color:#ff4d2e}
+</style></head><body>
+<header><b>FORGE</b><button id="inst" hidden>Install</button></header>
+<div id="app"></div>
+<nav><button id="t0" onclick="tabTo('w')">Workouts</button><button id="t1" onclick="tabTo('b')">Weight</button></nav>
+<script>
+const $=s=>document.querySelector(s),LS=localStorage;
+const L={chest:'Chest (pectorals)',delts:'Front & side shoulders',reardelt:'Rear shoulders',biceps:'Biceps',triceps:'Triceps',abs:'Abs / core',lats:'Upper & mid back (lats)',lowback:'Lower back',glutes:'Glutes',quads:'Quads (front thigh)',hams:'Hamstrings (back thigh)',calves:'Calves'};
+const E={
+cp:['Chest press machine','chest','delts,triceps','Adjust the seat so the handles sit at mid-chest height.|Sit back, shoulder blades pinched, feet flat.|Press forward until arms are nearly straight, without locking elbows.|Return slowly over 2-3 seconds without resting the weights.'],
+idb:['Incline dumbbell press','chest','delts,triceps','Set the bench to 30-45 degrees and sit with dumbbells on your thighs.|Kick them up to shoulder level, back against the pad.|Press up until arms are straight over your upper chest.|Lower slowly until elbows are just below shoulder level.'],
+sp:['Shoulder press machine','delts','triceps','Adjust the seat so the handles are at shoulder height.|Back against the pad, chest up.|Press up until arms are almost straight.|Lower slowly to ear level.'],
+lr:['Cable lateral raise','delts','','Stand sideways to the cable, handle in the far hand.|Keep a slight bend in the elbow and brace your core.|Raise your arm out to the side up to shoulder height.|Lower slowly. No swinging.'],
+pd:['Triceps rope pushdown','triceps','','Stand close to the cable with elbows tucked at your sides.|Push the rope down until arms are straight, spreading the ends.|Squeeze the triceps for a second.|Let the rope rise until forearms are parallel to the floor. Elbows stay still.'],
+pl:['Plank','abs','lowback,glutes','Place forearms on the floor, elbows under shoulders.|Step your feet back so head to heels is a straight line.|Tighten abs and glutes and breathe steadily.|Hold the time. Drop to your knees if hips sag.'],
+lp:['Lat pulldown','lats','biceps,reardelt','Lock your thighs under the pad and grip the bar just wider than shoulders (wider for wide-grip).|Lean back slightly with chest up.|Pull the bar to your upper chest by driving elbows down.|Return slowly until arms are straight.'],
+sr:['Seated cable row','lats','biceps,reardelt','Sit with feet on the platform, knees slightly bent, back straight.|Pull the handle to your lower ribs, squeezing shoulder blades together.|Pause for one second.|Extend your arms slowly without rounding your back.'],
+cr:['Chest-supported / machine row','lats','reardelt,biceps','Set the chest pad so you can reach the handles with straight arms.|Rest your chest on the pad and grip the handles.|Pull elbows back and squeeze shoulder blades.|Return slowly.'],
+fp:['Face pull','reardelt','lats','Set the rope at face height and step back with arms extended.|Pull the rope toward your face, elbows high and wide.|Squeeze your rear shoulders so hands finish beside your ears.|Return slowly.'],
+dc:['Dumbbell curl','biceps','','Stand tall with dumbbells at your sides, palms forward.|Keep elbows pinned to your ribs.|Curl up to shoulder height.|Lower slowly. No swinging.'],
+hc:['Hammer curl','biceps','','Stand tall with dumbbells at your sides, palms facing each other.|Keep elbows by your ribs.|Curl up without rotating your wrists.|Lower slowly.'],
+lg:['Leg press','quads','glutes,hams','Set the seat so knees bend to about 90 degrees, feet shoulder-width on the platform.|Keep your back and hips flat on the pad.|Push through your heels until legs are almost straight. Do not lock knees.|Lower slowly without letting hips lift off the seat.'],
+rdl:['Romanian deadlift (dumbbells)','hams','glutes,lowback','Stand tall holding dumbbells in front of your thighs.|Push hips back with knees slightly bent and back flat.|Slide the dumbbells down your legs to mid-shin.|Squeeze glutes to stand back up.'],
+sq:['Bodyweight squat','quads','glutes,hams','Stand with feet shoulder-width apart, toes slightly out, arms forward.|Sit hips back and down over 3 seconds.|Go as deep as comfortable with knees tracking over toes, and pause 1 second.|Push through your heels to stand.'],
+lc:['Leg curl machine','hams','calves','Adjust the pad to sit just above your heels, knees in line with the pivot.|Curl your heels toward your glutes.|Squeeze for one second.|Lower slowly.'],
+cf:['Calf raise','calves','','Place the balls of your feet on a step or machine pad, heels free (seated: pad on your thighs).|Rise as high as you can onto your toes.|Pause for one second.|Lower slowly into a deep stretch.'],
+cc:['Cable crunch','abs','','Kneel below a high cable with the rope beside your head.|Keep hips still and curl your ribs toward your pelvis.|Squeeze your abs.|Return slowly.'],
+icp:['Incline chest press machine','chest','delts,triceps','Set the seat so handles are at upper-chest height.|Keep your back flat against the pad.|Press up and forward until arms are nearly straight.|Lower slowly.'],
+fdb:['Flat dumbbell press','chest','delts,triceps','Lie on a flat bench with dumbbells at chest level and feet flat.|Press up until arms are straight over your chest.|Lower slowly until elbows are just below bench level.|Keep wrists stacked over elbows.'],
+pdk:['Pec deck','chest','delts','Adjust the seat so handles are at chest height.|Back flat, elbows slightly bent.|Bring the handles together in front of your chest.|Return slowly until you feel a chest stretch.'],
+dsp:['Seated dumbbell shoulder press','delts','triceps','Sit on a bench with back support, dumbbells at shoulder height.|Press up until arms are straight above shoulders.|Lower slowly to ear level.|Keep ribs down and do not arch your back.'],
+ote:['Overhead cable triceps extension','triceps','','Face away from the cable with the rope held behind your head, elbows pointing forward.|Stagger your feet and brace your core.|Extend your arms overhead.|Return slowly. Elbows stay still.'],
+dr:['Single-arm dumbbell row','lats','biceps,reardelt','Place one hand and knee on a bench with a flat back.|Hold a dumbbell in the other hand, arm hanging straight.|Pull the dumbbell to your hip.|Lower slowly. Finish all reps, then switch sides.'],
+rd:['Rear delt pec deck','reardelt','lats','Face the pad and set the handles at shoulder height.|Hold the handles with straight arms.|Pull back until your arms are in line with your shoulders.|Return slowly.'],
+db:['Dead bug','abs','','Lie on your back with arms up and knees bent at 90 degrees.|Press your lower back into the floor.|Slowly lower the opposite arm and leg.|Return and switch sides.'],
+ht:['Hip thrust','glutes','hams','Sit on the floor with your upper back against a bench, bar or pad across your hips.|Plant your feet flat with knees bent.|Drive through your heels until your body is a straight line.|Squeeze glutes at the top, then lower slowly.'],
+le:['Leg extension','quads','','Adjust the back pad so knees line up with the pivot and the pad rests on your lower shins.|Extend your legs until almost straight.|Squeeze quads for one second.|Lower slowly.'],
+wk:['Incline walk','quads','glutes,hams,calves','Set the treadmill incline to 6-10% and a comfortable speed.|Stand tall and do not hold the rails.|Swing arms naturally.|Keep a pace where you can still talk.'],
+cy:['Cycle','quads','glutes,hams,calves','Set the seat so your knee is slightly bent at the bottom of the pedal stroke.|Start at easy resistance.|Pedal at a steady pace.|Keep a pace where you can still talk.'],
+xt:['Cross-trainer','quads','glutes,hams,calves','Step on and hold the handles lightly.|Keep your posture tall.|Move in smooth strides at moderate resistance.|Keep a pace where you can still talk.']};
+const D=[
+['Day 1 - Push A',[['cp','3 × 8-12'],['idb','3 × 8-12'],['sp','3 × 10-12'],['lr','3 × 12-15'],['pd','3 × 10-15'],['pl','3 × 30-45 s']]],
+['Day 2 - Pull A',[['lp','3 × 8-12'],['sr','3 × 8-12'],['cr','3 × 10-12'],['fp','3 × 12-15'],['dc','3 × 10-12'],['wk','20 min']]],
+['Day 3 - Legs A',[['lg','4 × 10-12'],['rdl','3 × 8-10'],['sq','3 × 15-20','3 s down, 1 s pause'],['lc','3 × 12'],['cf','3 × 15'],['cc','3 × 12-15']]],
+['Day 4 - Push B',[['icp','3 × 8-12'],['fdb','3 × 8-12'],['pdk','3 × 12-15'],['dsp','3 × 10'],['ote','3 × 12'],['cy','20 min']]],
+['Day 5 - Pull B',[['lp','3 × 8-12','wide grip'],['dr','3 × 10 each side'],['cr','3 × 10-12'],['rd','3 × 12-15'],['hc','3 × 10-12'],['db','3 × 12']]],
+['Day 6 - Legs B + cardio',[['ht','4 × 10-12'],['lg','3 × 12-15','feet high and wide, lighter'],['sq','3 × 15-20','3 s down, 1 s pause'],['le','3 × 12-15'],['lc','3 × 12','seated'],['cf','3 × 15','seated'],['xt','25-30 min']]]];
+const FR=[['delts','M34 31 Q25 29 20 37 Q18 46 23 53 Q28 47 33 41 Q35 36 34 31Z'],['chest','M49 35 Q42 33 35 37 Q32 44 36 51 Q43 55 49 52Z'],['biceps','M22 50 Q18 58 19 67 Q23 70 27 66 Q28 58 27 50Z'],['abs','M44 57H49V65H43.5Z M43.5 67H49V75H43Z M43 77H49V86Q45 86 43 80Z M36 53Q33 64 36 80L41 82Q40 66 41 56Z'],['quads','M49 96Q40 94 35 100Q32 118 36 140Q42 148 47 144Q50 125 49 96Z'],['calves','M36 152Q33 166 37 184Q42 186 45 182Q47 166 45 152Z']];
+const BK=[['reardelt','M34 31 Q25 29 20 37 Q18 46 23 53 Q28 47 33 41 Q35 36 34 31Z'],['lats','M50 25 L42 31 Q36 35 34 42 L49 56Z M49 57 Q38 52 34 43 Q32 53 36 64 Q42 72 49 74Z'],['triceps','M23 44 Q19 54 20 66 Q24 69 28 65 Q29 54 28 44Z'],['lowback','M49 70 L43 72 Q42 80 44 88 L49 90Z'],['glutes','M49 90 Q40 88 35 94 Q33 103 38 108 Q46 110 49 104Z'],['hams','M48 110 Q39 109 36 114 Q34 128 37 144 Q43 148 47 144 Q49 128 48 110Z'],['calves','M37 150 Q33 162 37 176 Q41 184 45 176 Q48 162 46 150Z']];
+const BD=['M42 29Q33 30 30 35Q33 55 35 78Q32 92 33 100L67 100Q68 92 65 78Q67 55 70 35Q67 30 58 29Z'],BL=['M30 35Q20 36 17 48Q15 62 18 72Q18 88 17 100L23 102Q27 90 28 72Q30 56 31 42Z','M34 98Q31 120 35 148Q33 165 36 190L38 198L47 198L46 188Q48 165 46 150Q50 125 50 98Z'];
+const two=(d,c)=>`<path class="${c}" d="${d}"/><path class="${c}" d="${d}" transform="matrix(-1 0 0 1 100 0)"/>`;
+function fig(p,s){const c=k=>p.includes(k)?'p':s.includes(k)?'s':'m';
+const base='<ellipse class="b" cx="50" cy="14" rx="8" ry="10"/><rect class="b" x="45" y="22" width="10" height="9" rx="3"/>'+BD.map(d=>`<path class="b" d="${d}"/>`).join('')+BL.map(d=>two(d,'b')).join('');
+return `<svg class="fig" viewBox="0 0 200 206"><g>${base}${FR.map(([k,d])=>two(d,c(k))).join('')}</g><g transform="translate(100 0)">${base}${BK.map(([k,d])=>two(d,c(k))).join('')}</g><text x="50" y="204">FRONT</text><text x="150" y="204">BACK</text></svg>`}
+// storage
+const dbp=new Promise((res,rej)=>{const r=indexedDB.open('forge',1);r.onupgradeneeded=()=>r.result.createObjectStore('img');r.onsuccess=()=>res(r.result);r.onerror=rej});
+const idb=async(m,k,v)=>{const d=await dbp;return new Promise((res,rej)=>{const o=d.transaction('img',m==='get'?'readonly':'readwrite').objectStore('img');const q=m==='get'?o.get(k):m==='put'?o.put(v,k):o.delete(k);q.onsuccess=()=>res(q.result);q.onerror=rej})};
+const urls={};
+async function img(id){if(urls[id]!==undefined)return urls[id];const b=await idb('get',id).catch(()=>null);return urls[id]=b?URL.createObjectURL(b):null}
+const W=()=>JSON.parse(LS.fw||'{}'),H=()=>+LS.fh||163,bmi=k=>k/((H()/100)**2),cat=b=>b<18.5?'Underweight':b<25?'Normal':b<30?'Overweight':'Obese';
+let tab='w',day=(new Date().getDay()+6)%7,open=null;
+function tabTo(t){tab=t;open=null;render()}
+function go(i){const x=D[day][1][i];open={id:x[0],sets:x[1],note:x[2]};history.pushState({o:1},'');render()}
+addEventListener('popstate',()=>{open=null;render()});
+async function render(){window.scrollTo(0,0);$('#t0').className=tab==='w'?'on':'';$('#t1').className=tab==='b'?'on':'';
+tab==='b'?weight():open?await detail():await main()}
+async function main(){const d=D[day];
+const chips=[1,2,3,4,5,6].map((n,i)=>`<button class="chip ${i===day?'on':''}" onclick="day=${i};render()">Day ${n}</button>`).join('')+`<button class="chip ${day===6?'on':''}" onclick="day=6;render()">Rest</button>`;
+if(!d){$('#app').innerHTML=`<div class="chips">${chips}</div><h2>Rest day</h2><p class="mut">Recover, sleep 7-8 hours and take an easy walk. Keep eating your protein.</p>`;return}
+const us=await Promise.all(d[1].map(x=>img(x[0])));
+$('#app').innerHTML=`<div class="chips">${chips}</div><h2>${d[0]}</h2>`+d[1].map((x,i)=>`<div class="row" onclick="go(${i})"><div><div class="nm">${E[x[0]][0]}</div><div class="sd">${x[1]}${x[2]?' · '+x[2]:''}</div></div>${us[i]?`<img class="th" src="${us[i]}">`:''}</div>`).join('')}
+async function detail(){const e=E[open.id],u=await img(open.id),ps=e[1].split(','),ss=e[2]?e[2].split(','):[];
+$('#app').innerHTML=`<button class="bk" onclick="history.back()">← Back</button><h2>${e[0]}</h2><div class="sets">${open.sets}${open.note?' · '+open.note:''}</div>${u?`<img class="hero" src="${u}">`:''}
+<a class="btn" href="https://www.youtube.com/results?search_query=${encodeURIComponent(e[0]+' how to #shorts')}" target="_blank" rel="noopener">Watch demo (YouTube Shorts)</a>
+<h3>Muscles trained</h3>${fig(ps,ss)}<a class="btn2" href="https://www.google.com/search?tbm=isch&q=${encodeURIComponent(e[0]+' muscles worked anatomy')}" target="_blank" rel="noopener">See real photos of muscles worked</a><p><b>Main:</b> ${ps.map(k=>L[k]).join(', ')}${ss.length?`<br><b>Also works:</b> ${ss.map(k=>L[k]).join(', ')}`:''}</p>
+<h3>How to do it</h3><ol>${e[3].split('|').map(s=>`<li>${s}</li>`).join('')}</ol>
+<h3>Your photo / GIF</h3><label class="btn2">${u?'Change':'Add'} photo or GIF<input type="file" accept="image/*" hidden onchange="addImg(event)"></label>${u?'<button class="btn2" onclick="rmImg()">Remove</button>':''}`}
+async function addImg(ev){const f=ev.target.files[0];if(!f)return;if(f.size>15e6)return alert('File too large (max 15 MB)');await idb('put',open.id,f);reset(open.id);render()}
+async function rmImg(){await idb('del',open.id);reset(open.id);render()}
+function reset(id){if(urls[id])URL.revokeObjectURL(urls[id]);delete urls[id]}
+function saveW(){const v=parseFloat($('#wv').value),d=$('#wd').value;if(!(v>20&&v<300)||!d)return alert('Enter a valid weight in kg');const w=W();w[d]=v;LS.fw=JSON.stringify(w);render()}
+function setH(){const v=parseFloat($('#hv').value);if(v>100&&v<250){LS.fh=v;render()}}
+function delW(d){const w=W();delete w[d];LS.fw=JSON.stringify(w);render()}
+function chart(ks,w){if(ks.length<2)return '<p class="mut">Log 2 or more days to see the trend.</p>';const vs=ks.map(k=>w[k]),mn=Math.min(...vs)-1,mx=Math.max(...vs)+1,X=i=>30+i*(290/(ks.length-1)),Y=v=>115-(v-mn)/(mx-mn)*100;
+return `<svg viewBox="0 0 340 130" class="ch"><polyline fill="none" stroke="#ff4d2e" stroke-width="2.5" points="${vs.map((v,i)=>X(i)+','+Y(v)).join(' ')}"/>${vs.map((v,i)=>`<circle cx="${X(i)}" cy="${Y(v)}" r="3" fill="#ff4d2e"/>`).join('')}<text x="4" y="14" fill="#888" font-size="10">${mx.toFixed(1)}</text><text x="4" y="124" fill="#888" font-size="10">${mn.toFixed(1)}</text></svg>`}
+function weight(){const w=W(),ks=Object.keys(w).sort(),t=new Date().toLocaleDateString('en-CA'),k=w[t]!==undefined?t:ks[ks.length-1];
+let card='<p class="mut">No entries yet. Log your weight below.</p>';
+if(k){const b=bmi(w[k]);card=`<div class="card"><div class="mut">${k===t?'BMI today':'BMI on '+k+' (latest)'}</div><div class="big">${b.toFixed(1)}</div><div>${cat(b)} · ${w[k]} kg · ${H()} cm</div></div>`}
+$('#app').innerHTML=`<h2>Body weight</h2>${card}<div class="card"><div class="f"><input id="wd" type="date" value="${t}" max="${t}"><input id="wv" type="number" step="0.1" inputmode="decimal" placeholder="Weight (kg)" value="${w[t]||''}"></div><button class="btn" onclick="saveW()">Save</button></div>
+<h3>Trend (last 30 entries)</h3>${chart(ks.slice(-30),w)}<h3>Height (cm)</h3><div class="f"><input id="hv" type="number" value="${H()}"><button class="btn2" style="width:auto;margin:0" onclick="setH()">Update</button></div>
+<h3>History</h3>${ks.slice().reverse().map(d=>`<div class="row"><div><div class="nm">${d}</div><div class="sd">${w[d]} kg · BMI ${bmi(w[d]).toFixed(1)} (${cat(bmi(w[d]))})</div></div><button class="x" onclick="delW('${d}')">Delete</button></div>`).join('')}<p class="mut">BMI = kg ÷ height² (WHO categories).</p>`}
+// PWA
+function ic(n){const c=document.createElement('canvas');c.width=c.height=n;const x=c.getContext('2d');x.fillStyle='#000';x.fillRect(0,0,n,n);x.fillStyle='#ff4d2e';x.font=`900 ${n*.5}px sans-serif`;x.textAlign='center';x.textBaseline='middle';x.fillText('F',n/2,n/2+n*.03);return c.toDataURL('image/png')}
+try{const u=location.href.split('#')[0].split('?')[0],m={name:'FORGE',short_name:'FORGE',start_url:u,scope:u.slice(0,u.lastIndexOf('/')+1),display:'standalone',background_color:'#000000',theme_color:'#000000',icons:[192,512].map(n=>({src:ic(n),sizes:n+'x'+n,type:'image/png',purpose:'any maskable'}))};
+const l=document.createElement('link');l.rel='manifest';l.href=URL.createObjectURL(new Blob([JSON.stringify(m)],{type:'application/manifest+json'}));document.head.appendChild(l)}catch(e){}
+if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+let ip;addEventListener('beforeinstallprompt',e=>{e.preventDefault();ip=e;$('#inst').hidden=false});$('#inst').onclick=()=>ip&&ip.prompt();
+render();
+</script></body></html>
